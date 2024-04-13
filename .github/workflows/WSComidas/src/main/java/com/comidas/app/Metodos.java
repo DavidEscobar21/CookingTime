@@ -286,4 +286,19 @@ public class Metodos {
     }
 
     //</editor-fold>
+
+
+    //<editor-fold defaultstate="collapsed" desc="public method: listaIngredientes">
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="public method: agregaIngredientes">
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="public method: actualizaIngredientes">
+
+    //</editor-fold>
+    //<editor-fold defaultstate="collapsed" desc="public method: eliminaIngredientes">
+
+    //</editor-fold>
+
 }
