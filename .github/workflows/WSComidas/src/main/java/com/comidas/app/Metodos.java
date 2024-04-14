@@ -8,6 +8,7 @@ import com.comidas.MD5EncriptaClave;
 import com.comidas.OperacionesDB;
 import com.comidas.Procesos;
 import com.comidas.objetos.ListaCatalago;
+import com.comidas.objetos.ListaIngredientes;
 import com.comidas.objetos.ParametrosGen;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.Produces;
@@ -287,17 +288,251 @@ public class Metodos {
 
     //</editor-fold>
 
-
     //<editor-fold defaultstate="collapsed" desc="public method: listaIngredientes">
+    @POST
+    @Path("ListaIngrediente")
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    public Response ListaIngrediente(@QueryParam("idUsuario") String idUsuario
+    ) throws JSONException {
+
+        Connection con = null;
+        ResultSet rs = null;
+        Procesos prc = new Procesos();
+        OperacionesDB operDB = new OperacionesDB();
+
+        JSONArray jsonArray = new JSONArray();
+        ParametrosGen paramGen;
+
+        rutaPropiedades = contexto.getRealPath("recursos");
+        paramGen = prc.cargaPropiedades(rutaPropiedades);
+        log = Logger.getLogger(this.getClass());
+        log.info("***********  Entro Lista Ingredientes *****************");
+
+        log.info("Parametro: " + idUsuario);
+
+        con = operDB.connectDB(paramGen);
+        boolean conectado = operDB.conectado;
+        if (!conectado) {
+            return Response.ok(jsonArray.toString()).build();
+        }
+        try {
+            String sqlString = "SELECT * FROM Ingredientes WHERE IdUsuario=" + idUsuario;
+            ArrayList datos = new ArrayList();
+            log.info("Ejecuta ..: " + sqlString);
+
+            rs = operDB.ejecutaQuery(sqlString, datos, con);
+            //cstmt = operDB.ejecutaProcedimiento(datos, sqlString, con);
+            log.info("Obteniendo resultados... ");
+
+            while (rs.next()) {
+                ListaIngredientes lista = new ListaIngredientes();
+                lista.setIdIngrediente(rs.getInt(1));
+                lista.setIngrediente(rs.getString(2));
+                lista.setDescripcionIngrediente(rs.getString(3));
+                lista.setTieneIngrediente(rs.getBoolean(4));
+                lista.setFechaRegistro(rs.getTimestamp(5));
+                lista.setIdUsuario(rs.getInt(6));
+
+                jsonArray.put(lista);
+            }
+
+            con.close();
+        } catch (SQLException ex) {
+            log.info(" ******** SQLException ********** : " + ex.getMessage());
+
+        }
+        return Response.ok(jsonArray.toString()).build();
+    }
 
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="public method: agregaIngredientes">
+    @POST
+    @Path("AgregaIngredientes")
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    public Response agregaIngredientes(@QueryParam("ingrediente") String ingrediente,
+                           @QueryParam("descripcionIngrediente") String descripcionIngrediente,
+                           @QueryParam("idUsuario") Integer idUsuario) throws JSONException {
 
+        Connection con = null;
+        ResultSet rs = null;
+        Procesos prc = new Procesos();
+        OperacionesDB operDB = new OperacionesDB();
+
+        CallableStatement cstmt;
+        Integer codRet = -1;
+        String msg = "";
+        JSONObject jsonObj = new JSONObject();
+        ParametrosGen paramGen;
+
+        rutaPropiedades = contexto.getRealPath("recursos");
+        paramGen = prc.cargaPropiedades(rutaPropiedades);
+        log = Logger.getLogger(this.getClass());
+        log.info("***********  Entro al registro *****************");
+
+        log.info("Nombre Ingrediente: " + ingrediente);
+        log.info("Descripcion Ingrediente: " + descripcionIngrediente);
+        log.info("Id Usuario: " + idUsuario);
+
+        con = operDB.connectDB(paramGen);
+        boolean conectado = operDB.conectado;
+        if (!conectado) {
+            jsonObj.put("codRet", "-1");
+            jsonObj.put("mensaje", "Error de conexion a la DB");
+            return Response.ok(jsonObj.toString()).build();
+        }
+        try {
+            String sqlString = "spAgregaIngrediente";
+            ArrayList datos = new ArrayList();
+            log.info("Ejecuta ..: " + sqlString);
+
+            datos.add(new String[]{"String", ingrediente, "IN"});
+            datos.add(new String[]{"String", descripcionIngrediente, "IN"});
+            datos.add(new String[]{"Int", idUsuario.toString(), "IN"});
+            datos.add(new String[]{"Int", "codResultado", "OUT"});
+            datos.add(new String[]{"String", "mensaje", "OUT"});
+
+            cstmt = operDB.ejecutaProcedimiento(datos, sqlString, con);
+            log.info("Obteniendo resultados... ");
+
+            codRet = cstmt.getInt(4);
+            msg = cstmt.getString(5);
+
+            con.close();
+            log.info("Resultado: " + codRet + " - " + msg);
+            jsonObj.put("codRet", codRet);
+            jsonObj.put("mensaje", msg);
+
+        } catch (SQLException ex) {
+            log.info(" ******** SQLException ********** : " + ex.getMessage());
+            jsonObj.put("codRet", "11");
+            jsonObj.put("mensaje", "Ocurrio un error en la aplicación");
+        }
+        return Response.ok(jsonObj.toString()).build();
+    }
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="public method: actualizaIngredientes">
+    @POST
+    @Path("ActualizaIngredientes")
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    public Response actualizaIngredientes(@QueryParam("ingrediente") String ingrediente,
+                                 @QueryParam("descripcionIngrediente") String descripcionIngrediente,
+                                 @QueryParam("tieneIngrediente") Boolean tieneIngrediente) throws JSONException {
 
+        Connection con = null;
+        ResultSet rs = null;
+        Procesos prc = new Procesos();
+        OperacionesDB operDB = new OperacionesDB();
+
+        CallableStatement cstmt;
+        Integer codRet = -1;
+        String msg = "";
+        JSONObject jsonObj = new JSONObject();
+        ParametrosGen paramGen;
+
+        rutaPropiedades = contexto.getRealPath("recursos");
+        paramGen = prc.cargaPropiedades(rutaPropiedades);
+        log = Logger.getLogger(this.getClass());
+        log.info("***********  Entro al registro *****************");
+
+        log.info("Nombre Ingrediente: " + ingrediente);
+        log.info("Descripcion Ingrediente: " + descripcionIngrediente);
+        log.info("Tiene Ingrediente: " + tieneIngrediente);
+
+        con = operDB.connectDB(paramGen);
+        boolean conectado = operDB.conectado;
+        if (!conectado) {
+            jsonObj.put("codRet", "-1");
+            jsonObj.put("mensaje", "Error de conexion a la DB");
+            return Response.ok(jsonObj.toString()).build();
+        }
+        try {
+            String sqlString = "spActualizaIngrediente";
+            ArrayList datos = new ArrayList();
+            log.info("Ejecuta ..: " + sqlString);
+
+            datos.add(new String[]{"String", ingrediente, "IN"});
+            datos.add(new String[]{"String", descripcionIngrediente, "IN"});
+            datos.add(new String[]{"Bit", tieneIngrediente.toString(), "IN"});
+            datos.add(new String[]{"Int", "codResultado", "OUT"});
+            datos.add(new String[]{"String", "mensaje", "OUT"});
+
+            cstmt = operDB.ejecutaProcedimiento(datos, sqlString, con);
+            log.info("Obteniendo resultados... ");
+
+            codRet = cstmt.getInt(4);
+            msg = cstmt.getString(5);
+
+            con.close();
+            log.info("Resultado: " + codRet + " - " + msg);
+            jsonObj.put("codRet", codRet);
+            jsonObj.put("mensaje", msg);
+
+        } catch (SQLException ex) {
+            log.info(" ******** SQLException ********** : " + ex.getMessage());
+            jsonObj.put("codRet", "11");
+            jsonObj.put("mensaje", "Ocurrio un error en la aplicación");
+        }
+        return Response.ok(jsonObj.toString()).build();
+    }
     //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="public method: eliminaIngredientes">
+    @POST
+    @Path("EliminaIngredientes")
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    public Response EliminaIngredientes(@QueryParam("idIngrediente") Integer idIngrediente) throws JSONException {
+
+        Connection con = null;
+        ResultSet rs = null;
+        Procesos prc = new Procesos();
+        OperacionesDB operDB = new OperacionesDB();
+
+        CallableStatement cstmt;
+        Integer codRet = -1;
+        String msg = "";
+        JSONObject jsonObj = new JSONObject();
+        ParametrosGen paramGen;
+
+        rutaPropiedades = contexto.getRealPath("recursos");
+        paramGen = prc.cargaPropiedades(rutaPropiedades);
+        log = Logger.getLogger(this.getClass());
+        log.info("***********  Entro al registro *****************");
+
+        log.info("Id Ingrediente: " + idIngrediente);
+
+        con = operDB.connectDB(paramGen);
+        boolean conectado = operDB.conectado;
+        if (!conectado) {
+            jsonObj.put("codRet", "-1");
+            jsonObj.put("mensaje", "Error de conexion a la DB");
+            return Response.ok(jsonObj.toString()).build();
+        }
+        try {
+            String sqlString = "spEliminaIngrediente";
+            ArrayList datos = new ArrayList();
+            log.info("Ejecuta ..: " + sqlString);
+
+            datos.add(new String[]{"Int", idIngrediente.toString() , "IN"});
+            datos.add(new String[]{"Int", "codResultado", "OUT"});
+            datos.add(new String[]{"String", "mensaje", "OUT"});
+
+            cstmt = operDB.ejecutaProcedimiento(datos, sqlString, con);
+            log.info("Obteniendo resultados... ");
+
+            codRet = cstmt.getInt(2);
+            msg = cstmt.getString(3);
+
+            con.close();
+            log.info("Resultado: " + codRet + " - " + msg);
+            jsonObj.put("codRet", codRet);
+            jsonObj.put("mensaje", msg);
+
+        } catch (SQLException ex) {
+            log.info(" ******** SQLException ********** : " + ex.getMessage());
+            jsonObj.put("codRet", "11");
+            jsonObj.put("mensaje", "Ocurrio un error en la aplicación");
+        }
+        return Response.ok(jsonObj.toString()).build();
+    }
 
     //</editor-fold>
 
